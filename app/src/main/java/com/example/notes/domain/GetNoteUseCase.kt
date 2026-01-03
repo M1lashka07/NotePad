@@ -5,6 +5,6 @@ class GetNoteUseCase(
 ) {
 
     operator fun invoke(noteId: Int): Note {
-        repository.getNote(noteId)
+        return repository.getNote(noteId)
     }
 }

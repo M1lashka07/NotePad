@@ -7,6 +7,6 @@ class GetAllNotesUseCase(
 ) {
 
     operator fun invoke(): Flow<List<Note>> {
-        repository.getAllNotes()
+        return repository.getAllNotes()
     }
 }

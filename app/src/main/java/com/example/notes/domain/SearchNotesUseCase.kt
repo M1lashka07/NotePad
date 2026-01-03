@@ -7,6 +7,6 @@ class SearchNotesUseCase(
 ) {
 
     operator fun invoke(query: String): Flow<List<Note>> {
-        repository.searchNotes(query)
+        return repository.searchNotes(query)
     }
 }
