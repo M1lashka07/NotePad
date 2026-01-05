@@ -1,15 +1,18 @@
 package com.example.notes.domain
 
-import android.icu.text.CaseMap
-
 class AddNoteUseCase(
     private val repository: NotesRepository
 ) {
 
-    operator fun invoke(
+    suspend operator fun invoke(
         title: String,
         content: String
     ) {
-        repository.addNote(title, content)
+        repository.addNote(
+            title = title,
+            content = content,
+            isPinned = false,
+            updatedAt = System.currentTimeMillis()
+            )
     }
 }

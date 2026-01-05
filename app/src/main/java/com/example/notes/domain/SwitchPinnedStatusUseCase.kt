@@ -5,7 +5,7 @@ class SwitchPinnedStatusUseCase(
 ) {
 
 
-    operator fun invoke(noteId: Int) {
+    suspend operator fun invoke(noteId: Int) {
         repository.switchPinnedStatus(noteId)
     }
 }

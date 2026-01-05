@@ -20,8 +20,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NotesTheme {
-                NotesScreen()
+                NotesScreen(
+                    onNoteClick = {},
+                    onAddNoteClick = {}
+                )
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
