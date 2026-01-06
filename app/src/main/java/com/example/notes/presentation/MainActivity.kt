@@ -11,6 +11,7 @@ import com.example.notes.presentation.ui.theme.NotesTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             NotesTheme {
