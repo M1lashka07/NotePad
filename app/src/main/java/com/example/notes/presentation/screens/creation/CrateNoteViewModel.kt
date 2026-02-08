@@ -4,17 +4,19 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.NotesRepositoryImpl
-import com.example.notes.data.TestNotesRepositoryImpl
 import com.example.notes.domain.AddNoteUseCase
+import com.example.notes.domain.ContentItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class CrateNoteViewModel(context: Context) : ViewModel() {
-
-    private val repository = NotesRepositoryImpl.getInstance(context)
-    private val addNoteUseCase = AddNoteUseCase(repository)
+@HiltViewModel
+class CrateNoteViewModel @Inject constructor(
+    private val addNoteUseCase: AddNoteUseCase
+) : ViewModel() {
 
     private val _state = MutableStateFlow<CreateNoteState>(CreateNoteState.Creation())
     val state = _state.asStateFlow()
@@ -58,8 +60,8 @@ class CrateNoteViewModel(context: Context) : ViewModel() {
                     _state.update { previousState ->
                         if (previousState is CreateNoteState.Creation) {
                             val title = previousState.title
-                            val content = previousState.content
-                            addNoteUseCase(title, content)
+                            val content = ContentItem.Text(previousState.content)
+                            addNoteUseCase(title, listOf(content))
                             CreateNoteState.Finished
                         } else {
                             previousState

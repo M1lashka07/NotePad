@@ -2,7 +2,6 @@
 
 package com.example.notes.presentation.screens.editing
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -28,31 +26,32 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.notes.presentation.screens.editing.EditNoteCommand.*
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.notes.domain.ContentItem
+import com.example.notes.presentation.screens.editing.EditNoteCommand.InputContent
+import com.example.notes.presentation.screens.editing.EditNoteCommand.InputTitle
 import com.example.notes.presentation.utils.DateFormatter
 
 @Composable
 fun EditNoteScreen(
     modifier: Modifier = Modifier,
     noteId: Int,
-    context: Context = LocalContext.current.applicationContext,
-    viewModel: EditNoteViewModel = viewModel {
-        EditNoteViewModel(noteId, context)
-    },
+    viewModel: EditNoteViewModel = hiltViewModel(
+        creationCallback = { factory: EditNoteViewModel.Factory ->
+            factory.create(noteId)
+        }
+    ),
     onFinished: () -> Unit
 ) {
 
     val state = viewModel.state.collectAsState()
     val currentState = state.value
 
-    when(currentState) {
-
+    when (currentState) {
 
 
         is EditNoteState.Editing -> {
@@ -75,8 +74,9 @@ fun EditNoteScreen(
                         ),
                         navigationIcon = {
                             Icon(
-                                modifier = Modifier.padding(start = 16.dp, end = 8.dp)
-                                    .clickable{
+                                modifier = Modifier
+                                    .padding(start = 16.dp, end = 8.dp)
+                                    .clickable {
                                         viewModel.processCommand(EditNoteCommand.Back)
                                     },
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -85,8 +85,9 @@ fun EditNoteScreen(
                         },
                         actions = {
                             Icon(
-                                modifier = Modifier.padding(end = 16.dp)
-                                    .clickable{
+                                modifier = Modifier
+                                    .padding(end = 16.dp)
+                                    .clickable {
                                         viewModel.processCommand(EditNoteCommand.Delete)
                                     },
                                 imageVector = Icons.Outlined.Delete,
@@ -95,13 +96,14 @@ fun EditNoteScreen(
                         }
                     )
                 }
-            ) {innerPadding ->
+            ) { innerPadding ->
 
                 Column(
                     modifier = Modifier.padding(innerPadding)
                 ) {
                     TextField(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(horizontal = 8.dp),
                         value = currentState.note.title,
                         onValueChange = {
@@ -135,35 +137,22 @@ fun EditNoteScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    TextField(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                            .weight(1f),
-                        value = currentState.note.content,
-                        onValueChange = {
-                            viewModel.processCommand(InputContent(it))
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        placeholder = {
-                            Text(
-                                text = "Note something down!",
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    currentState.note.content.filterIsInstance<ContentItem.Text>()
+                        .forEach {contentItem ->
+
+                            TextContent(
+                                modifier = Modifier
+                                    .weight(1f),
+                                text = contentItem.content,
+                                onTextChanged = {
+                                    viewModel.processCommand(InputContent(it))
+                                }
                             )
                         }
-                    )
 
                     Button(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(horizontal = 24.dp),
                         onClick = {
                             viewModel.processCommand(EditNoteCommand.Save)
@@ -194,4 +183,36 @@ fun EditNoteScreen(
 
         EditNoteState.Initial -> {}
     }
+}
+
+@Composable
+private fun TextContent(
+    modifier: Modifier = Modifier,
+    text: String,
+    onTextChanged: (String) -> Unit
+) {
+    TextField(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        value = text,
+        onValueChange = onTextChanged,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        textStyle = TextStyle(
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        ),
+        placeholder = {
+            Text(
+                text = "Note something down!",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+            )
+        }
+    )
 }

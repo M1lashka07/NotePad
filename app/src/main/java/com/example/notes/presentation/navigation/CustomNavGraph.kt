@@ -50,44 +50,6 @@ fun NavGraph() {
     }
 }
 
-
-
-@Composable
-fun CustomNavGraph() {
-    val customScreen = remember {
-        mutableStateOf<CustomScreen>(CustomScreen.Notes)
-    }
-
-    when(val currentScreen = customScreen.value) {
-        CustomScreen.CreateNote -> {
-            CreateNoteScreen(
-                onFinished = {
-                    customScreen.value = CustomScreen.Notes
-                }
-            )
-        }
-        is CustomScreen.EditNote -> {
-            EditNoteScreen(
-                noteId = currentScreen.noteId,
-                onFinished = {
-                    customScreen.value = CustomScreen.Notes
-                }
-            )
-        }
-        CustomScreen.Notes -> {
-            NotesScreen(
-                onNoteClick = {
-                    customScreen.value = CustomScreen.EditNote(it.id)
-                },
-                onAddNoteClick = {
-                    customScreen.value = CustomScreen.CreateNote
-                }
-            )
-        }
-    }
-
-}
-
 sealed class Screen(val route: String) {
 
     data object Notes: Screen("notes")

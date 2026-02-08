@@ -1,70 +1,53 @@
 package com.example.notes.data
 
 import android.content.Context
+import com.example.notes.domain.ContentItem
 import com.example.notes.domain.Note
 import com.example.notes.domain.NotesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-class NotesRepositoryImpl private constructor(context: Context) : NotesRepository {
-
-    private val notesDataBase = NotesDataBase.getInstance(context)
-    private val notesDao = notesDataBase.notesDao()
+class NotesRepositoryImpl @Inject constructor(
+    private val notesDAO: NotesDAO
+) : NotesRepository {
 
     override suspend fun addNote(
         title: String,
-        content: String,
+        content: List<ContentItem>,
         isPinned: Boolean,
         updatedAt: Long
     ) {
-        val noteDbModel = NoteDbModel(0, title, content, updatedAt, isPinned)
-        notesDao.addNote(noteDbModel)
+        val note = Note(0, title, content, updatedAt, isPinned)
+        val noteDbModel = note.toDbModel()
+        notesDAO.addNote(noteDbModel)
     }
 
     override suspend fun deleteNote(noteId: Int) {
-        notesDao.deleteNote(noteId)
+        notesDAO.deleteNote(noteId)
     }
 
     override suspend fun editNote(note: Note) {
-        notesDao.addNote(note.toDbModel())
+        notesDAO.addNote(note.toDbModel())
     }
 
     override fun getAllNotes(): Flow<List<Note>> {
-        return notesDao.getAllNotes().map {
+        return notesDAO.getAllNotes().map {
             it.toEntities()
         }
     }
 
     override suspend fun getNote(noteId: Int): Note {
-        return notesDao.getNote(noteId).toEntity()
+        return notesDAO.getNote(noteId).toEntity()
     }
 
     override fun searchNotes(query: String): Flow<List<Note>> {
-        return notesDao.searchNotes(query).map {
+        return notesDAO.searchNotes(query).map {
             it.toEntities()
         }
     }
 
     override suspend fun switchPinnedStatus(noteId: Int) {
-        notesDao.switchPinnedStatus(noteId)
-    }
-
-    companion object {
-
-        private var instance: NotesRepositoryImpl? = null
-        private val LOCK = Any()
-
-        fun getInstance(context: Context): NotesRepositoryImpl {
-
-            instance?.let { return it }
-
-            synchronized(LOCK) {
-                instance?.let { return it }
-
-                return NotesRepositoryImpl(context).also {
-                    instance = it
-                }
-            }
-        }
+        notesDAO.switchPinnedStatus(noteId)
     }
 }

@@ -7,35 +7,9 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [NoteDbModel::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class NotesDataBase : RoomDatabase() {
-
     abstract fun notesDao(): NotesDAO
-
-    companion object {
-
-        private var instance: NotesDataBase? = null
-        private val LOCK = Any()
-
-        fun getInstance(context: Context): NotesDataBase {
-
-            instance?.let {
-                return it
-            }
-
-            synchronized(LOCK) {
-                instance?.let { return it }
-
-                return Room.databaseBuilder(
-                    context = context,
-                    klass = NotesDataBase::class.java,
-                    name = "notes.db"
-                ).build().also {
-                    instance = it
-                }
-            }
-        }
-    }
 }

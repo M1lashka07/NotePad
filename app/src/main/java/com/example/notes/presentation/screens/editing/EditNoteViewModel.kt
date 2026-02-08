@@ -1,26 +1,28 @@
 package com.example.notes.presentation.screens.editing
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.notes.data.NotesRepositoryImpl
-import com.example.notes.data.TestNotesRepositoryImpl
-import com.example.notes.domain.AddNoteUseCase
+import com.example.notes.domain.ContentItem
 import com.example.notes.domain.DeleteNoteUseCase
 import com.example.notes.domain.EditNoteUseCase
 import com.example.notes.domain.GetNoteUseCase
 import com.example.notes.domain.Note
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditNoteViewModel(private val noteId: Int, context: Context) : ViewModel() {
-
-    private val repository = NotesRepositoryImpl.getInstance(context)
-    private val editNoteUseCase = EditNoteUseCase(repository)
-    private val getNoteUseCase = GetNoteUseCase(repository)
-    private val deleteNoteUseCase = DeleteNoteUseCase(repository)
+@HiltViewModel(assistedFactory = EditNoteViewModel.Factory::class)
+class EditNoteViewModel @AssistedInject constructor(
+    @Assisted("noteId") private val noteId: Int,
+    private val editNoteUseCase: EditNoteUseCase,
+    private val getNoteUseCase: GetNoteUseCase,
+    private val deleteNoteUseCase: DeleteNoteUseCase
+) : ViewModel() {
 
     private val _state = MutableStateFlow<EditNoteState>(EditNoteState.Initial)
     val state = _state.asStateFlow()
@@ -34,6 +36,11 @@ class EditNoteViewModel(private val noteId: Int, context: Context) : ViewModel()
         }
     }
 
+    @AssistedFactory
+    interface Factory {
+        fun create(@Assisted("noteId") noteId: Int): EditNoteViewModel
+    }
+
     fun processCommand(command: EditNoteCommand) {
         when (command) {
             EditNoteCommand.Back -> {
@@ -43,7 +50,8 @@ class EditNoteViewModel(private val noteId: Int, context: Context) : ViewModel()
             is EditNoteCommand.InputContent -> {
                 _state.update { previousState ->
                     if (previousState is EditNoteState.Editing) {
-                        val newNote = previousState.note.copy(content = command.content)
+                        val newContent = ContentItem.Text(content = command.content)
+                        val newNote = previousState.note.copy(content = listOf(newContent))
                         previousState.copy(newNote)
                     } else {
                         previousState
@@ -118,7 +126,17 @@ sealed interface EditNoteState {
         val note: Note
     ) : EditNoteState {
         val isSaveEnabled: Boolean
-            get() = note.title.isNotBlank() && note.content.isNotBlank()
+            get() {
+                return when {
+                    note.title.isBlank() -> false
+                    note.content.isEmpty() -> false
+                    else -> {
+                        note.content.any {
+                            it !is ContentItem.Text || it.content.isBlank()
+                        }
+                    }
+                }
+            }
     }
 
     data object Finished : EditNoteState
